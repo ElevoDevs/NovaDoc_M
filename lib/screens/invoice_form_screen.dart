@@ -32,10 +32,38 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
   void _generateInvoice() {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Generando factura electrónica...')),
-      );
+      _showPreviewDialog();
     }
+  }
+
+  void _showPreviewDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Vista Previa'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Colegio: ${_schoolNameController.text}'),
+            Text('Precio: \$${_priceController.text}'),
+            Text('Generado por: ${_generatedByController.text}'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Factura generada exitosamente')),
+              );
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -143,17 +171,34 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               },
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _generateInvoice,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[700],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Generar Factura Electrónica',
-                style: TextStyle(fontSize: 16),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.visibility),
+                    label: const Text('Vista Previa'),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        _showPreviewDialog();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.check_circle),
+                    label: const Text('Generar Factura'),
+                    onPressed: _generateInvoice,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[700],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

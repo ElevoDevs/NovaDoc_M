@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/invoice.dart';
+import '../services/api_service.dart';
 
 class InvoiceFormScreen extends StatefulWidget {
   const InvoiceFormScreen({super.key});
@@ -30,40 +32,43 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     super.dispose();
   }
 
-  void _generateInvoice() {
+  void _generateInvoice() async {
     if (_formKey.currentState!.validate()) {
-      _showPreviewDialog();
-    }
-  }
+      try {
+        await ApiService.createCompanyInvoice(
+          companyName: _schoolNameController.text,
+          companyNit: _nitController.text.isEmpty ? 'N/A' : _nitController.text,
+          companyAddress: _addressController.text.isEmpty ? null : _addressController.text,
+          companyPhone: null,
+          companyEmail: null,
+          concept: _conceptController.text.isEmpty ? 'Factura' : _conceptController.text,
+          subtotal: double.parse(_priceController.text),
+          tax: double.parse(_priceController.text) * 0.19,
+          total: double.parse(_priceController.text) * 1.19,
+          generatedBy: _generatedByController.text,
+        );
 
-  void _showPreviewDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Vista Previa'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Colegio: ${_schoolNameController.text}'),
-            Text('Precio: \$${_priceController.text}'),
-            Text('Generado por: ${_generatedByController.text}'),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Factura generada exitosamente')),
-              );
-            },
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
-    );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Factura generada exitosamente')),
+          );
+          _formKey.currentState!.reset();
+          _schoolNameController.clear();
+          _priceController.clear();
+          _nitController.clear();
+          _addressController.clear();
+          _conceptController.clear();
+          _observationsController.clear();
+          _generatedByController.clear();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -171,34 +176,15 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               },
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.visibility),
-                    label: const Text('Vista Previa'),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _showPreviewDialog();
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.check_circle),
-                    label: const Text('Generar Factura'),
-                    onPressed: _generateInvoice,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[700],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
+            ElevatedButton.icon(
+              icon: const Icon(Icons.check_circle),
+              label: const Text('Generar Factura'),
+              onPressed: _generateInvoice,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[700],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
             ),
           ],
         ),

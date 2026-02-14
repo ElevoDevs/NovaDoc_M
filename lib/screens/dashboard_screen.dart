@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -11,7 +12,24 @@ class DashboardScreen extends StatelessWidget {
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
         actions: [
-          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
+          FutureBuilder<Map<String, dynamic>>(
+            future: ApiService.getPdfCounter(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final data = snapshot.data!;
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Text(
+                      'PDFs: ${data['totalGenerated']}/${data['limitAllowed']}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox();
+            },
+          ),
         ],
       ),
       body: ListView(
